@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio - Phan Xuân Anh Tài</title>
+    <style>
+        /* Giữ nguyên CSS cũ và thêm một số style cho CRUD */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
+        header { background: #2c3e50; color: #fff; padding: 2rem; text-align: center; border-radius: 8px; margin-bottom: 20px; }
+        section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #2c3e50; padding-bottom: 5px; color: #2c3e50; }
+        .project-item { padding: 15px; border-bottom: 1px solid #eee; position: relative; }
+        .btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        .btn-add { background: #27ae60; color: white; margin-top: 10px; }
+        .btn-edit { background: #f39c12; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        form input, form textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Phan Xuân Anh Tài</h1>
+    <p>Intern Backend Developer [cite: 463]</p>
+    <div class="contact-info">
+        📍 Bình Thạnh, TP. Hồ Chí Minh [cite: 467] | 📞 0935101621 [cite: 465] | 📧 anhtaipxuan@gmail.com [cite: 466]
+    </div>
+</header>
+
+<section>
+    <h2>Dự Án Cá Nhân</h2>
+    <div id="project-list">
+        <p>Đang tải dữ liệu...</p>
+    </div>
+</section>
+
+<section style="border: 2px dashed #3498db;">
+    <h2>Quản Lý Dự Án (Admin)</h2>
+    <form id="project-form">
+        <input type="hidden" id="project-id">
+        <input type="text" id="project-name" placeholder="Tên dự án" required>
+        <textarea id="project-desc" placeholder="Mô tả dự án" required></textarea>
+        <input type="text" id="project-link" placeholder="Link dự án (URL)">
+        <button type="submit" class="btn btn-add" id="submit-btn">Lưu Dự Án</button>
+        <button type="button" class="btn" onclick="resetForm()" id="cancel-btn" style="display:none;">Hủy</button>
+    </form>
+</section>
+
+<script>
+    const API_URL = "http://localhost:8081/api/projects"; // Cổng 8081 theo cấu hình docker của bạn
+
+    // 1. Lấy danh sách dự án (READ)
+    async function fetchProjects() {
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            const list = document.getElementById('project-list');
+            list.innerHTML = data.map(p => `
+                <div class="project-item">
+                    <strong>${p.name}</strong>
+                    <p>${p.description}</p>
+                    <a href="${p.link}" target="_blank">Xem dự án</a>
+                    <div style="margin-top:10px">
+                        <button class="btn btn-edit" onclick="editProject(${p.id}, '${p.name}', '${p.description}', '${p.link}')">Sửa</button>
+                        <button class="btn btn-delete" onclick="deleteProject(${p.id})">Xóa</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            document.getElementById('project-list').innerHTML = "Lỗi kết nối API Backend!";
+        }
+    }
+
+    // 2. Thêm hoặc Cập nhật dự án (CREATE/UPDATE)
+    document.getElementById('project-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('project-id').value;
+        const project = {
+            name: document.getElementById('project-name').value,
+            description: document.getElementById('project-desc').value,
+            link: document.getElementById('project-link').value
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${API_URL}/${id}` : API_URL;
+
+        await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(project)
+        });
+
+        resetForm();
+        fetchProjects();
+    });
+
+    // 3. Xóa dự án (DELETE)
+    async function deleteProject(id) {
+        if(confirm('Bạn có chắc chắn muốn xóa?')) {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            fetchProjects();
+        }
+    }
+
+    // Hàm hỗ trợ sửa
+    function editProject(id, name, desc, link) {
+        document.getElementById('project-id').value = id;
+        document.getElementById('project-name').value = name;
+        document.getElementById('project-desc').value = desc;
+        document.getElementById('project-link').value = link;
+        document.getElementById('submit-btn').innerText = "Cập nhật thay đổi";
+        document.getElementById('cancel-btn').style.display = "inline";
+    }
+
+    function resetForm() {
+        document.getElementById('project-id').value = '';
+        document.getElementById('project-form').reset();
+        document.getElementById('submit-btn').innerText = "Lưu Dự Án";
+        document.getElementById('cancel-btn').style.display = "none";
+    }
+
+    // Khởi chạy khi tải trang
+    fetchProjects();
+</script>
+</body>
+</html>

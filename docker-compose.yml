@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # Dịch vụ cho ứng dụng Java
+  app-java:
+    image: anhtai26/duanjava:1.0.2
+    container_name: phan-xuan-anh-tai-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db-mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-mysql:3306/demo_docker_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    restart: always
+
+  # Dịch vụ Database MySQL
+  db-mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: demo_docker_db
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+
+# Khai báo volume để lưu trữ dữ liệu bền vững
+volumes:
+  db_data:
